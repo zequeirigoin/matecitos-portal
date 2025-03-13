@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
 
-function InvoiceForm({ onClose }) {
+function InvoiceForm({ initialData, onSubmit, onClose }) {  // agregamos onSubmit a los props
   const [formData, setFormData] = useState({
-    type: 'received', // received o emitted
-    reference: '',
-    amount: '',
-    currency: 'ARS',
-    date: '',
-    mainPdf: null,
-    paymentStatus: 'pending',
-    paymentProof: null,
-    taxProofs: [],
-    observations: ''
+    type: initialData?.type || 'received',
+    reference: initialData?.reference || '',
+    amount: initialData?.amount || '',
+    currency: initialData?.currency || 'ARS',
+    date: initialData?.date || '',
+    mainPdf: initialData?.mainPdf || null,
+    paymentStatus: initialData?.paymentStatus || 'pending',
+    taxProofs: initialData?.taxProofs || [],
+    observations: initialData?.observations || ''
   });
 
   const handleSubmit = (e) => {
@@ -24,14 +23,24 @@ function InvoiceForm({ onClose }) {
       id: id
     };
     
-    console.log(finalData);
+    onSubmit(finalData);  // llamamos a onSubmit en lugar de solo console.log
     onClose();
+  };
+
+  const handleFileDelete = (fileType, index = null) => {
+    if (fileType === 'mainPdf') {
+      setFormData({ ...formData, mainPdf: null });
+    } else if (fileType === 'taxProofs' && index !== null) {
+      const newTaxProofs = [...formData.taxProofs];
+      newTaxProofs.splice(index, 1);
+      setFormData({ ...formData, taxProofs: newTaxProofs });
+    }
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <h2>Nueva Factura</h2>
+        <h2>{initialData ? 'Editar Factura' : 'Nueva Factura'}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group type-selector">
             <label>Tipo de Factura</label>
@@ -61,7 +70,9 @@ function InvoiceForm({ onClose }) {
             <label>Referencia</label>
             <input
               type="text"
-              placeholder={formData.type === 'received' ? "Ej: Servicios de Juan" : "Ej: Factura Cliente XYZ"}
+              placeholder={formData.type === 'received' 
+                ? "Ej: Servicios de Desarrollo Modulo EAI" 
+                : "Ej: Factura Cliente XYZ"}
               value={formData.reference}
               onChange={(e) => setFormData({...formData, reference: e.target.value})}
               required
@@ -97,36 +108,21 @@ function InvoiceForm({ onClose }) {
               type="file"
               accept=".pdf"
               onChange={(e) => setFormData({...formData, mainPdf: e.target.files[0]})}
-              required
+              required={!formData.mainPdf}
             />
+            {formData.mainPdf && (
+              <div className="file-preview">
+                <span>{formData.mainPdf.name}</span>
+                <button 
+                  type="button" 
+                  className="delete-file" 
+                  onClick={() => handleFileDelete('mainPdf')}
+                >
+                  ×
+                </button>
+              </div>
+            )}
           </div>
-
-          {formData.type === 'emitted' && (
-            <div className="form-group">
-              <label>Estado de Cobro</label>
-              <select
-                value={formData.paymentStatus}
-                onChange={(e) => setFormData({...formData, paymentStatus: e.target.value})}
-              >
-                <option value="pending">Pendiente</option>
-                <option value="paid">Cobrado</option>
-                <option value="partial">Cobro Parcial</option>
-              </select>
-            </div>
-          )}
-
-          {formData.type === 'received' && (
-            <div className="form-group">
-              <label>Estado de Pago</label>
-              <select
-                value={formData.paymentStatus}
-                onChange={(e) => setFormData({...formData, paymentStatus: e.target.value})}
-              >
-                <option value="pending">Pendiente</option>
-                <option value="paid">Pagado</option>
-              </select>
-            </div>
-          )}
 
           <div className="form-group">
             <label>Comprobantes Adicionales</label>
@@ -134,8 +130,24 @@ function InvoiceForm({ onClose }) {
               type="file"
               accept=".pdf,.jpg,.png"
               multiple
-              onChange={(e) => setFormData({...formData, taxProofs: Array.from(e.target.files)})}
+              onChange={(e) => setFormData({...formData, taxProofs: [...formData.taxProofs, ...Array.from(e.target.files)]})}
             />
+            {formData.taxProofs.length > 0 && (
+              <div className="files-list">
+                {formData.taxProofs.map((file, index) => (
+                  <div key={index} className="file-preview">
+                    <span>{file.name}</span>
+                    <button 
+                      type="button" 
+                      className="delete-file" 
+                      onClick={() => handleFileDelete('taxProofs', index)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <small className="help-text">
               {formData.type === 'emitted' 
                 ? 'Comprobantes de transferencia, retenciones, IVA, etc.'

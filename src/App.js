@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import './App.css';
 import InvoiceForm from './components/InvoiceForm';
+import InvoiceViewer from './components/InvoiceViewer';
 
 function App() {
   const [activeTab, setActiveTab] = useState('received');
@@ -10,39 +11,91 @@ function App() {
     endDate: ''
   });
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Move demo data to useMemo
-  const demoInvoices = useMemo(() => [
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [editingInvoice, setEditingInvoice] = useState(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null);
+  const [invoices, setInvoices] = useState([
     {
       id: '15-1-2024_14-30',
       reference: 'Servicios de Desarrollo',
       amount: 5000,
       currency: 'USD',
-      status: 'Pendiente',
+      paymentStatus: 'pending',
       date: '2024-01-15',
-      type: 'received'
+      type: 'received',
+      mainPdf: new File([new Blob()], 'factura-desarrollo.pdf', { type: 'application/pdf' }),
+      taxProofs: [
+        new File([new Blob()], 'comprobante-pago.pdf', { type: 'application/pdf' }),
+        new File([new Blob()], 'comprobante-transferencia.pdf', { type: 'application/pdf' })
+      ],
+      observations: 'Pago programado para el 30/01/2024'
     },
-    { id: '2', number: 'A-002', amount: 1500, currency: 'USD', status: 'Pagada', date: '2024-01-10', type: 'received' },
-    { id: '3', number: 'B-001', amount: 8000, currency: 'ARS', status: 'Pendiente', date: '2024-01-05', type: 'received' }
-  ], []);
+  ]);
+
+  const handleDeleteInvoice = (invoice) => {
+    setDeleteConfirmation(invoice);
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirmation) {
+      setInvoices(prevInvoices => 
+        prevInvoices.filter(inv => inv.id !== deleteConfirmation.id)
+      );
+      setDeleteConfirmation(null);
+    }
+  };
 
   const filteredInvoices = useMemo(() => {
-    return demoInvoices.filter(invoice => {
+    return invoices.filter(invoice => {
       const invoiceDate = new Date(invoice.date);
       const start = dateFilter.startDate ? new Date(dateFilter.startDate) : null;
       const end = dateFilter.endDate ? new Date(dateFilter.endDate) : null;
 
-      // Filtro por tipo
       if (invoice.type !== activeTab) return false;
-      // Filtro por fecha
       if (start && invoiceDate < start) return false;
       if (end && invoiceDate > end) return false;
-      // Filtro por referencia
       if (searchTerm && !invoice.reference.toLowerCase().includes(searchTerm.toLowerCase())) return false;
 
       return true;
     });
-  }, [demoInvoices, dateFilter, activeTab, searchTerm]);
+  }, [invoices, dateFilter, activeTab, searchTerm]);
+
+  const handleSubmit = (formData) => {
+    if (editingInvoice) {
+      // Actualizar factura existente
+      setInvoices(prevInvoices => 
+        prevInvoices.map(invoice => 
+          invoice.id === editingInvoice.id ? { ...invoice, ...formData } : invoice
+        )
+      );
+      setEditingInvoice(null);
+    } else {
+      // Crear nueva factura
+      setInvoices(prevInvoices => [...prevInvoices, formData]);
+    }
+    setShowModal(false);
+  };
+
+  const stats = useMemo(() => {
+    const pending = invoices.filter(inv => inv.paymentStatus === 'pending');
+    
+    const totals = invoices.reduce((acc, inv) => {
+      if (inv.paymentStatus === 'pending') {
+        if (inv.type === 'emitted') {
+          acc.toCollect[inv.currency] = (acc.toCollect[inv.currency] || 0) + Number(inv.amount);
+        } else {
+          acc.toPay[inv.currency] = (acc.toPay[inv.currency] || 0) + Number(inv.amount);
+        }
+      }
+      return acc;
+    }, { toCollect: {}, toPay: {} });
+
+    return {
+      pendingCount: pending.length,
+      toCollect: totals.toCollect,
+      toPay: totals.toPay
+    };
+  }, [invoices]);
 
   return (
     <div className="app">
@@ -57,20 +110,22 @@ function App() {
         <div className="stats-container">
           <div className="stat-card">
             <h3>Facturas Pendientes</h3>
-            <p>15</p>
+            <p>{stats.pendingCount}</p>
           </div>
           <div className="stat-card">
             <h3>Por Cobrar</h3>
             <div className="amount-container">
-              <p>ARS $45,000</p>
-              <p>USD $1,500</p>
+              {Object.entries(stats.toCollect).map(([currency, amount]) => (
+                <p key={currency}>{currency} ${amount.toLocaleString()}</p>
+              ))}
             </div>
           </div>
           <div className="stat-card">
             <h3>Por Pagar</h3>
             <div className="amount-container">
-              <p>ARS $32,000</p>
-              <p>USD $800</p>
+              {Object.entries(stats.toPay).map(([currency, amount]) => (
+                <p key={currency}>{currency} ${amount.toLocaleString()}</p>
+              ))}
             </div>
           </div>
         </div>
@@ -125,26 +180,71 @@ function App() {
 
           <div className="invoice-list">
             {filteredInvoices.map(invoice => (
-              <div key={invoice.id} className="invoice-item">
+              <div key={invoice.id} className="invoice-card">
+                <div className="invoice-header">
+                  <h3>{invoice.reference}</h3>
+                  <span className={`status-badge ${invoice.paymentStatus}`}>
+                    {invoice.paymentStatus === 'pending' ? 'Pendiente' : 
+                     invoice.paymentStatus === 'partial' ? 'Cobro Parcial' : 'Pagado'}
+                  </span>
+                </div>
                 <div className="invoice-details">
-                  <h4>Factura #{invoice.number}</h4>
-                  <p className="invoice-amount">
-                    {invoice.currency} ${invoice.amount.toLocaleString()}
-                  </p>
-                  <p className="invoice-status">{invoice.status}</p>
-                  <p className="invoice-date">{invoice.date}</p>
+                  <div className="detail-row">
+                    <span>Tipo:</span>
+                    <span>{invoice.type === 'received' ? 'Recibida' : 'Emitida'}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span>Monto:</span>
+                    <span>{invoice.currency} ${Number(invoice.amount).toLocaleString()}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span>Fecha:</span>
+                    <span>{invoice.date}</span>
+                  </div>
                 </div>
                 <div className="invoice-actions">
-                  <button>Ver</button>
-                  <button>Editar</button>
+                  <button className="action-btn" onClick={() => setSelectedInvoice(invoice)}>Ver</button>
+                  <button 
+                    className="action-btn" 
+                    onClick={() => {
+                      setEditingInvoice(invoice);
+                      setShowModal(true);
+                    }}
+                  >
+                    Editar
+                  </button>
+                  <button 
+                    className="action-btn delete" 
+                    onClick={() => handleDeleteInvoice(invoice)}
+                  >
+                    Eliminar
+                  </button>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Agregar el InvoiceViewer */}
+          {selectedInvoice && (
+            <InvoiceViewer 
+              invoice={selectedInvoice}
+              onClose={() => setSelectedInvoice(null)}
+            />
+          )}
+
+          {/* Modal de creación existente */}
+          {showModal && (
+            <InvoiceForm 
+              initialData={editingInvoice}
+              onSubmit={handleSubmit}
+              onClose={() => {
+                setShowModal(false);
+                setEditingInvoice(null);
+              }} 
+            />
+          )}
         </div>
       </main>
-
-      {showModal && <InvoiceForm onClose={() => setShowModal(false)} />}
     </div>
   );
 }
