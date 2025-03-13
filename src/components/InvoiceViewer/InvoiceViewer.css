@@ -1,0 +1,50 @@
+.invoice-viewer {
+  max-width: 800px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.viewer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.detail-section {
+  margin-bottom: 30px;
+}
+
+.files-section {
+  margin: 20px 0;
+}
+
+.files-section h3,
+.observations-section h3 {
+  margin-bottom: 15px;
+  color: #34495e;
+}
+
+.additional-files {
+  margin-top: 15px;
+}
+
+.additional-files h4 {
+  margin-bottom: 10px;
+  color: #666;
+}
+
+.viewer-actions {
+  margin-top: 30px;
+  display: flex;
+  justify-content: flex-end;
+}

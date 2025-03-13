@@ -1,0 +1,30 @@
+{
+  "name": "matecitos-portal",
+  "version": "1.0.0",
+  "components": {
+    "InvoiceForm": {
+      "path": "src/components/InvoiceForm",
+      "dependencies": ["react", "useState", "useEffect"]
+    },
+    "InvoiceViewer": {
+      "path": "src/components/InvoiceViewer",
+      "dependencies": ["react"]
+    }
+  },
+  "dataStructures": {
+    "Invoice": {
+      "fields": {
+        "id": "string",
+        "reference": "string",
+        "amount": "number",
+        "currency": "string",
+        "paymentStatus": "string",
+        "date": "string",
+        "type": "string",
+        "mainPdf": "File",
+        "taxProofs": "File[]",
+        "observations": "string"
+      }
+    }
+  }
+}

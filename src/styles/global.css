@@ -1,0 +1,18 @@
+/* Color Variables */
+:root {
+  --primary-color: #3498db;
+  --secondary-color: #95a5a6;
+  --danger-color: #e74c3c;
+  --success-color: #2ecc71;
+  --text-color: #333;
+  --border-color: #ddd;
+}
+
+/* Common Components */
+.modal-overlay {
+  /* ... existing styles ... */
+}
+
+.status-badge {
+  /* ... existing styles ... */
+}
