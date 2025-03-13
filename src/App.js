@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import './App.css';
 import InvoiceForm from './components/InvoiceForm';
 import InvoiceViewer from './components/InvoiceViewer';
+import logo from './assets/logo.svg';
 
 function App() {
   const [activeTab, setActiveTab] = useState('received');
@@ -14,6 +15,7 @@ function App() {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [editingInvoice, setEditingInvoice] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState(null);
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
   const [invoices, setInvoices] = useState([
     {
       id: '15-1-2024_14-30',
@@ -37,12 +39,17 @@ function App() {
   };
 
   const confirmDelete = () => {
-    if (deleteConfirmation) {
+    if (deleteConfirmation && deleteConfirmationText.toLowerCase() === 'eliminar') {
       setInvoices(prevInvoices => 
         prevInvoices.filter(inv => inv.id !== deleteConfirmation.id)
       );
       setDeleteConfirmation(null);
+      setDeleteConfirmationText('');
     }
+  };
+
+  const handleDeleteClick = (invoice) => {
+    setDeleteConfirmation(invoice);
   };
 
   const filteredInvoices = useMemo(() => {
@@ -100,7 +107,10 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Portal Matecitos</h1>
+        <div className="header-left">
+          <img src={logo} alt="Matecitos Logo" className="app-logo" />
+          <h1>Portal Matecitos</h1>
+        </div>
         <button className="add-invoice-btn" onClick={() => setShowModal(true)}>
           Nueva Factura
         </button>
@@ -214,8 +224,8 @@ function App() {
                     Editar
                   </button>
                   <button 
-                    className="action-btn delete" 
-                    onClick={() => handleDeleteInvoice(invoice)}
+                    className="action-btn delete"
+                    onClick={() => handleDeleteClick(invoice)}
                   >
                     Eliminar
                   </button>
@@ -245,6 +255,40 @@ function App() {
           )}
         </div>
       </main>
+      
+      {/* Add the confirmation modal inside the main return */}
+      {deleteConfirmation && (
+        <div className="modal-overlay">
+          <div className="modal-content confirmation-modal">
+            <h3>¿Estás seguro que deseas eliminar esta factura?</h3>
+            <p>Para confirmar, escribe "eliminar"</p>
+            <input
+              type="text"
+              value={deleteConfirmationText}
+              onChange={(e) => setDeleteConfirmationText(e.target.value)}
+              placeholder="Escribe 'eliminar'"
+              className="confirmation-input"
+            />
+            <div className="confirmation-actions">
+              <button 
+                className="danger-btn"
+                onClick={confirmDelete}
+                disabled={deleteConfirmationText.toLowerCase() !== 'eliminar'}
+              >
+                Eliminar
+              </button>
+              <button 
+                onClick={() => {
+                  setDeleteConfirmation(null);
+                  setDeleteConfirmationText('');
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
