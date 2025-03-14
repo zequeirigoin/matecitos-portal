@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';  // Add this import
 
 function InvoiceForm({ initialData, onSubmit, onClose }) {  // agregamos onSubmit a los props
   const [formData, setFormData] = useState({
@@ -168,12 +169,38 @@ function InvoiceForm({ initialData, onSubmit, onClose }) {  // agregamos onSubmi
 
           <div className="form-actions">
             <button type="submit">Guardar</button>
-            <button type="button" onClick={onClose}>Cancelar</button>
+            <button 
+              type="button" 
+              onClick={() => {
+                console.log('Cancel button clicked'); // Debugging
+                if (typeof onClose === 'function') {
+                  console.log('Calling onClose'); // Debugging
+                  onClose();
+                } else {
+                  console.error('onClose is not a function:', onClose); // Debugging
+                }
+              }}
+              className="cancel-btn"
+            >
+              Cancelar
+            </button>
           </div>
         </form>
       </div>
     </div>
   );
 }
+
+InvoiceForm.defaultProps = {
+  onClose: () => {
+    console.warn('onClose function not provided');
+  }
+};
+
+InvoiceForm.propTypes = {
+  initialData: PropTypes.object,
+  onSubmit: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired
+};
 
 export default InvoiceForm;

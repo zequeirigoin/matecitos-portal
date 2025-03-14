@@ -1,22 +1,13 @@
-# Portal Matecitos - Invoice Management System
+# Sistema de Administración de Matecitos
 
-## Description
-Web application for managing invoices, built with React. Allows tracking of both received and emitted invoices, with features for filtering, viewing details, and managing payment statuses.
+## Descripción del Proyecto
+El Sistema de Administración de Matecitos es una aplicación web para la gestión de facturas, diseñada para facilitar el control de documentos financieros tanto emitidos como recibidos.
 
-## Technical Implementation Details
+## Tecnologías Utilizadas
+- React.js (v18+)
+- React Router (v6+)
+- Context API para gestión de estado
+- CSS Modules para estilos
+- ES6+ JavaScript
 
-### State Management
-```javascript
-// Main state hooks
-const [activeTab, setActiveTab] = useState('received');
-const [showModal, setShowModal] = useState(false);
-const [dateFilter, setDateFilter] = useState({ startDate: '', endDate: '' });
-const [searchTerm, setSearchTerm] = useState('');
-const [selectedInvoice, setSelectedInvoice] = useState(null);
-const [editingInvoice, setEditingInvoice] = useState(null);
-const [deleteConfirmation, setDeleteConfirmation] = useState(null);
-```
-
-## Development Guide
-
-### Project Structure
+## Estructura del Proyecto
